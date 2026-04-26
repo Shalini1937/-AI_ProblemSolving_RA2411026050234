@@ -26,9 +26,10 @@ This project solves the map coloring problem using Constraint Satisfaction Probl
 
 ## Sample Output
 
-(Add screenshot)
+<img width="857" height="504" alt="image" src="https://github.com/user-attachments/assets/72628511-05f3-4f75-9539-3f16c6697a88" />
 
----
+
+
 
 ## GitHub Repository
 
