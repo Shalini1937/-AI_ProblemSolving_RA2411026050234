@@ -37,4 +37,4 @@ This project solves the map coloring problem using Constraint Satisfaction Probl
 
 ## Website Link
 
-(To be added after GitHub Pages setup)
+(https://shalini1937.github.io/-AI_ProblemSolving_RA2411026050234/index.html)
