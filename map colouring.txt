@@ -1,0 +1,1602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>MapColor AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<style>
+/* ═══════════════════════════════════════════
+   MapColor AI — App Design System
+   Aesthetic: iOS-meets-Material3, dark glass
+   ═══════════════════════════════════════════ */
+:root{
+  --sys-bg:        #0a0a0f;
+  --sys-surface:   #12121a;
+  --sys-surface2:  #1a1a26;
+  --sys-surface3:  #22223a;
+  --sys-border:    rgba(255,255,255,.07);
+  --sys-border2:   rgba(255,255,255,.12);
+
+  --brand:         #6c63ff;
+  --brand-light:   #8b85ff;
+  --brand-glow:    rgba(108,99,255,.35);
+
+  --success:       #00d68f;
+  --danger:        #ff4757;
+  --warn:          #ffa502;
+
+  --c-red:    #ff4757;
+  --c-green:  #2ed573;
+  --c-blue:   #1e90ff;
+  --c-yellow: #ffa502;
+
+  --text:     #f0f0ff;
+  --text2:    #8888aa;
+  --text3:    #55556a;
+
+  --nav-h:   68px;
+  --safe-b:  env(safe-area-inset-bottom, 0px);
+
+  --ff: 'Plus Jakarta Sans', sans-serif;
+  --fm: 'JetBrains Mono', monospace;
+
+  --ease-spring: cubic-bezier(.34,1.56,.64,1);
+  --ease-out:    cubic-bezier(.16,1,.3,1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--ff);
+  background: var(--sys-bg);
+  color: var(--text);
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+/* ── GLASS MIXIN ── */
+.glass {
+  background: rgba(18,18,26,.7);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--sys-border);
+}
+
+/* ══════════════════ APP SHELL ══════════════════ */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ── TOP BAR ── */
+.top-bar {
+  flex-shrink: 0;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  background: rgba(10,10,15,.9);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--sys-border);
+  z-index: 50;
+}
+.top-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.top-logo-icon {
+  width: 34px; height: 34px;
+  background: linear-gradient(135deg, var(--brand), #a78bfa);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  box-shadow: 0 0 20px var(--brand-glow);
+}
+.top-logo-text {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -.5px;
+}
+.top-logo-text em {
+  color: var(--brand-light);
+  font-style: normal;
+}
+.top-actions {
+  display: flex;
+  gap: 8px;
+}
+.top-btn {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: var(--sys-surface2);
+  border: 1px solid var(--sys-border);
+  color: var(--text2);
+  font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: all .18s;
+}
+.top-btn:hover, .top-btn.active {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: white;
+}
+
+/* ══ PAGE CONTAINER ══ */
+.pages {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+.page {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 16px 16px calc(var(--nav-h) + 16px + var(--safe-b));
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(12px);
+  transition: opacity .25s var(--ease-out), transform .25s var(--ease-out);
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--sys-surface3) transparent;
+}
+.page::-webkit-scrollbar { width: 3px; }
+.page::-webkit-scrollbar-thumb { background: var(--sys-surface3); border-radius: 2px; }
+.page.active {
+  opacity: 1;
+  pointer-events: all;
+  transform: translateY(0);
+}
+
+/* ══ BOTTOM NAV ══ */
+.bottom-nav {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: calc(var(--nav-h) + var(--safe-b));
+  padding-bottom: var(--safe-b);
+  display: flex;
+  align-items: flex-start;
+  padding-top: 8px;
+  gap: 0;
+  background: rgba(10,10,15,.92);
+  backdrop-filter: blur(24px);
+  border-top: 1px solid var(--sys-border);
+  z-index: 50;
+}
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: all .2s;
+  position: relative;
+}
+.nav-icon {
+  width: 44px; height: 32px;
+  border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  transition: all .25s var(--ease-spring);
+  position: relative;
+}
+.nav-item.active .nav-icon {
+  background: rgba(108,99,255,.2);
+  transform: scale(1.05);
+}
+.nav-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text3);
+  letter-spacing: .3px;
+  transition: color .2s;
+}
+.nav-item.active .nav-label { color: var(--brand-light); }
+.nav-dot {
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--brand);
+  position: absolute;
+  top: 2px; right: 8px;
+  opacity: 0;
+  transition: opacity .2s;
+}
+.nav-item.active .nav-dot { opacity: 1; }
+
+/* ══════════════════════════════════════════
+   PAGE: SOLVER
+   ══════════════════════════════════════════ */
+
+/* Section label */
+.sec-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text3);
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  padding-left: 4px;
+}
+
+/* CARD base */
+.card {
+  background: var(--sys-surface);
+  border: 1px solid var(--sys-border);
+  border-radius: 20px;
+  padding: 18px;
+  margin-bottom: 12px;
+  position: relative;
+  overflow: hidden;
+}
+.card-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text2);
+  letter-spacing: .3px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.card-title-icon {
+  width: 24px; height: 24px;
+  border-radius: 7px;
+  background: rgba(108,99,255,.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+}
+
+/* Quick samples */
+.samples-scroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+  margin-bottom: 0;
+}
+.samples-scroll::-webkit-scrollbar { display: none; }
+.sample-chip {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  border-radius: 50px;
+  background: var(--sys-surface2);
+  border: 1.5px solid var(--sys-border);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all .18s;
+  white-space: nowrap;
+}
+.sample-chip:hover, .sample-chip.picked {
+  background: rgba(108,99,255,.15);
+  border-color: var(--brand);
+  color: var(--brand-light);
+}
+
+/* Input fields */
+.field {
+  margin-bottom: 14px;
+}
+.field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text3);
+  letter-spacing: .4px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.field-input,
+.field-textarea {
+  width: 100%;
+  background: var(--sys-surface2);
+  border: 1.5px solid var(--sys-border);
+  border-radius: 14px;
+  padding: 13px 16px;
+  color: var(--text);
+  font-family: var(--fm);
+  font-size: 13px;
+  line-height: 1.55;
+  outline: none;
+  resize: none;
+  transition: border-color .18s, box-shadow .18s;
+}
+.field-input:focus,
+.field-textarea:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 4px rgba(108,99,255,.12);
+}
+.field-hint {
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 6px;
+  padding-left: 2px;
+}
+
+/* Color selector pills */
+.color-pills {
+  display: flex;
+  gap: 8px;
+}
+.color-pill {
+  flex: 1;
+  padding: 11px;
+  border-radius: 14px;
+  background: var(--sys-surface2);
+  border: 1.5px solid var(--sys-border);
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all .2s var(--ease-spring);
+}
+.color-pill.on {
+  background: rgba(108,99,255,.18);
+  border-color: var(--brand);
+  color: var(--brand-light);
+  transform: scale(1.03);
+}
+
+/* Color swatches row */
+.swatch-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+.swatch {
+  flex: 1; height: 5px;
+  border-radius: 50px;
+  opacity: .45;
+  transition: opacity .2s, flex .2s;
+}
+.swatch.show { opacity: 1; }
+
+/* SOLVE button */
+.solve-fab {
+  width: 100%;
+  padding: 16px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, var(--brand) 0%, #a78bfa 100%);
+  border: none;
+  color: white;
+  font-family: var(--ff);
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -.2px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: transform .2s var(--ease-spring), box-shadow .2s, opacity .2s;
+  box-shadow: 0 8px 32px var(--brand-glow);
+  margin-bottom: 12px;
+  position: relative;
+  overflow: hidden;
+}
+.solve-fab::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,.15), transparent);
+  pointer-events: none;
+}
+.solve-fab:hover { transform: scale(1.02); box-shadow: 0 12px 40px var(--brand-glow); }
+.solve-fab:active { transform: scale(.98); }
+.solve-fab:disabled { opacity: .6; }
+.fab-spinner { animation: spin .7s linear infinite; display: inline-block; }
+
+/* ══ GRAPH CARD ══ */
+.graph-card {
+  background: var(--sys-surface);
+  border: 1px solid var(--sys-border);
+  border-radius: 20px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.graph-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px 10px;
+}
+.graph-area {
+  position: relative;
+  height: 320px;
+  background: var(--sys-bg);
+  cursor: crosshair;
+}
+#gSvg { width: 100%; height: 100%; display: block; }
+.graph-empty {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 10px; pointer-events: none;
+}
+.empty-icon {
+  font-size: 48px;
+  opacity: .12;
+}
+.empty-text {
+  font-size: 13px;
+  color: var(--text3);
+  font-weight: 500;
+}
+.graph-footer {
+  padding: 10px 16px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.graph-hint {
+  font-size: 11px;
+  color: var(--text3);
+  font-family: var(--fm);
+}
+.graph-btns { display: flex; gap: 6px; }
+.sm-btn {
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: var(--sys-surface2);
+  border: 1px solid var(--sys-border);
+  color: var(--text2);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+}
+.sm-btn:hover { border-color: var(--brand); color: var(--brand-light); }
+
+/* ══ RESULT CARD ══ */
+.result-card {
+  background: var(--sys-surface);
+  border: 1px solid var(--sys-border);
+  border-radius: 20px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  animation: slideUp .4s var(--ease-out) both;
+}
+
+/* Status pill */
+.result-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--sys-border);
+}
+.status-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.status-dot.ok { background: var(--success); box-shadow: 0 0 10px var(--success); }
+.status-dot.fail { background: var(--danger); box-shadow: 0 0 10px var(--danger); }
+.status-text { font-size: 14px; font-weight: 700; }
+.status-text.ok { color: var(--success); }
+.status-text.fail { color: var(--danger); }
+
+/* Stats row */
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-bottom: 1px solid var(--sys-border);
+}
+.stat-cell {
+  text-align: center;
+  padding: 14px 8px;
+  border-right: 1px solid var(--sys-border);
+}
+.stat-cell:last-child { border-right: none; }
+.stat-num {
+  font-family: var(--fm);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--brand-light);
+  display: block;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.stat-lbl {
+  font-size: 10px;
+  color: var(--text3);
+  font-weight: 600;
+  letter-spacing: .4px;
+  text-transform: uppercase;
+}
+
+/* Assignment list */
+.assign-list {
+  padding: 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+.assign-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--sys-surface2);
+  border: 1px solid var(--sys-border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  animation: chipIn .35s var(--ease-spring) both;
+}
+.assign-swatch {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.assign-reg {
+  font-family: var(--fm);
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.assign-arrow { color: var(--text3); font-size: 11px; }
+.assign-col {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text2);
+}
+
+/* Steps section */
+.steps-section {
+  border-top: 1px solid var(--sys-border);
+}
+.steps-toggle-btn {
+  width: 100%;
+  padding: 13px 18px;
+  background: none;
+  border: none;
+  color: var(--text2);
+  font-family: var(--ff);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: color .18s;
+}
+.steps-toggle-btn:hover { color: var(--brand-light); }
+.steps-toggle-icon { transition: transform .25s var(--ease-out); font-size: 11px; }
+.steps-toggle-icon.open { transform: rotate(180deg); }
+.steps-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height .35s var(--ease-out);
+}
+.steps-body.open { max-height: 300px; overflow-y: auto; }
+.steps-inner { padding: 0 12px 12px; display: flex; flex-direction: column; gap: 5px; }
+.step-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 9px;
+  font-family: var(--fm);
+  font-size: 12px;
+  animation: fadeIn .1s ease both;
+}
+.step-pill.assign { background: rgba(46,213,115,.08); color: #2ed573; }
+.step-pill.backtrack { background: rgba(255,71,87,.08); color: #ff4757; }
+.step-tag {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+.assign .step-tag { background: rgba(46,213,115,.2); }
+.backtrack .step-tag { background: rgba(255,71,87,.2); }
+.step-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+/* Error card */
+.error-card {
+  background: rgba(255,71,87,.07);
+  border: 1px solid rgba(255,71,87,.25);
+  border-radius: 20px;
+  padding: 18px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 12px;
+  animation: slideUp .35s var(--ease-out) both;
+}
+.error-icon-wrap {
+  width: 40px; height: 40px;
+  border-radius: 12px;
+  background: rgba(255,71,87,.15);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.error-title { font-size: 14px; font-weight: 700; color: var(--danger); margin-bottom: 4px; }
+.error-msg { font-size: 13px; color: var(--text2); line-height: 1.5; }
+
+/* PDF button */
+.pdf-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.outline-btn {
+  flex: 1;
+  padding: 13px;
+  border-radius: 14px;
+  background: var(--sys-surface);
+  border: 1.5px solid var(--sys-border);
+  color: var(--text2);
+  font-family: var(--ff);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  transition: all .18s;
+}
+.outline-btn:hover {
+  border-color: var(--brand);
+  color: var(--brand-light);
+  background: rgba(108,99,255,.06);
+}
+
+/* ══════════════════════════════════════════
+   PAGE: HOW IT WORKS
+   ══════════════════════════════════════════ */
+.how-hero {
+  background: linear-gradient(135deg, rgba(108,99,255,.15), rgba(167,139,250,.08));
+  border: 1px solid rgba(108,99,255,.2);
+  border-radius: 24px;
+  padding: 28px 20px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+.how-hero-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+  display: block;
+}
+.how-hero h2 {
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: 8px;
+  letter-spacing: -.5px;
+}
+.how-hero p {
+  font-size: 14px;
+  color: var(--text2);
+  line-height: 1.6;
+}
+
+.algo-card {
+  background: var(--sys-surface);
+  border: 1px solid var(--sys-border);
+  border-radius: 20px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.algo-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+}
+.algo-num {
+  width: 34px; height: 34px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--brand), #a78bfa);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  font-weight: 800;
+  color: white;
+  flex-shrink: 0;
+}
+.algo-title { font-size: 15px; font-weight: 700; }
+.algo-body {
+  padding: 0 18px 16px;
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.65;
+}
+.algo-body strong { color: var(--brand-light); font-weight: 600; }
+.code-block {
+  background: var(--sys-bg);
+  border: 1px solid var(--sys-border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-family: var(--fm);
+  font-size: 11.5px;
+  color: #a78bfa;
+  line-height: 1.7;
+  margin-top: 10px;
+  overflow-x: auto;
+}
+
+/* ══════════════════════════════════════════
+   PAGE: ABOUT
+   ══════════════════════════════════════════ */
+.profile-card {
+  background: linear-gradient(135deg, rgba(108,99,255,.12), rgba(167,139,250,.06));
+  border: 1px solid rgba(108,99,255,.2);
+  border-radius: 24px;
+  padding: 28px 20px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+.profile-avatar {
+  width: 72px; height: 72px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, var(--brand), #a78bfa);
+  margin: 0 auto 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  box-shadow: 0 8px 30px var(--brand-glow);
+}
+.profile-name { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
+.profile-sub { font-size: 13px; color: var(--text2); }
+
+.tech-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.tech-item {
+  background: var(--sys-surface);
+  border: 1px solid var(--sys-border);
+  border-radius: 16px;
+  padding: 16px;
+}
+.tech-emoji { font-size: 24px; display: block; margin-bottom: 8px; }
+.tech-name { font-size: 13px; font-weight: 700; margin-bottom: 3px; }
+.tech-desc { font-size: 11px; color: var(--text3); }
+
+.info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--sys-border);
+}
+.info-row:last-child { border-bottom: none; }
+.info-key { font-size: 13px; color: var(--text2); font-weight: 500; }
+.info-val { font-size: 13px; font-weight: 700; font-family: var(--fm); color: var(--brand-light); }
+
+/* ══ D3 GRAPH ELEMENTS ══ */
+.lnk { stroke: rgba(255,255,255,.12); stroke-width: 2; }
+.nd circle { stroke-width: 2.5; cursor: grab; transition: r .2s; }
+.nd circle:active { cursor: grabbing; }
+.nd text {
+  fill: white;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; font-weight: 700;
+  pointer-events: none;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+/* ══ ANIMATIONS ══ */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes chipIn {
+  from { opacity: 0; transform: scale(.88); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulse {
+  0%,100% { box-shadow: 0 0 20px var(--brand-glow); }
+  50%      { box-shadow: 0 0 40px var(--brand-glow); }
+}
+
+/* ══ TOAST ══ */
+.toast {
+  position: fixed;
+  bottom: calc(var(--nav-h) + 16px + var(--safe-b));
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--sys-surface2);
+  border: 1px solid var(--sys-border2);
+  border-radius: 50px;
+  padding: 10px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  transition: all .3s var(--ease-spring);
+  z-index: 200;
+  pointer-events: none;
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ══ RESPONSIVE ══ */
+@media (min-width: 600px) {
+  .assign-list { grid-template-columns: repeat(3, 1fr); }
+  .tech-grid { grid-template-columns: repeat(4, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- TOP BAR -->
+  <header class="top-bar">
+    <div class="top-logo">
+      <div class="top-logo-icon">🎨</div>
+      <div class="top-logo-text">Map<em>Color</em> AI</div>
+    </div>
+    <div class="top-actions">
+      <button class="top-btn" id="pdfTopBtn" title="Export PDF">⬇</button>
+      <button class="top-btn" id="infoBtn" title="Info">ⓘ</button>
+    </div>
+  </header>
+
+  <!-- PAGES -->
+  <div class="pages">
+
+    <!-- ── PAGE: SOLVER ── -->
+    <div class="page active" id="page-solver">
+
+      <!-- Samples -->
+      <p class="sec-label">Quick Load</p>
+      <div class="card" style="padding:14px 16px;margin-bottom:12px">
+        <div class="samples-scroll">
+          <button class="sample-chip" data-s="simple">4-Region</button>
+          <button class="sample-chip" data-s="australia">🇦🇺 Australia</button>
+          <button class="sample-chip" data-s="usa">🇺🇸 US States</button>
+          <button class="sample-chip" data-s="europe">🇪🇺 Europe</button>
+          <button class="sample-chip" data-s="custom">+ Custom</button>
+        </div>
+      </div>
+
+      <!-- Graph -->
+      <p class="sec-label">Graph Canvas</p>
+      <div class="graph-card">
+        <div class="graph-header">
+          <div class="card-title" style="margin:0">
+            <div class="card-title-icon">◎</div>
+            Visualization
+          </div>
+          <div class="graph-btns">
+            <button class="sm-btn" id="resetGBtn">↺</button>
+            <button class="sm-btn" id="centerGBtn">⊙</button>
+          </div>
+        </div>
+        <div class="graph-area" id="graphArea">
+          <svg id="gSvg"></svg>
+          <div class="graph-empty" id="graphEmpty">
+            <div class="empty-icon">◈</div>
+            <div class="empty-text">Graph appears after solving</div>
+          </div>
+        </div>
+        <div class="graph-footer">
+          <div class="graph-hint">
+            <kbd style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-radius:4px;padding:1px 5px;font-size:10px">Dbl-tap</kbd> add node &nbsp;
+            <kbd style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-radius:4px;padding:1px 5px;font-size:10px">Shift+drag</kbd> edge
+          </div>
+        </div>
+      </div>
+
+      <!-- Input config -->
+      <p class="sec-label">Configuration</p>
+      <div class="card">
+        <div class="field">
+          <label>Regions <span style="text-transform:none;letter-spacing:0;color:var(--text3)">(comma-separated)</span></label>
+          <input class="field-input" type="text" id="regions" placeholder="A, B, C, D" autocomplete="off"/>
+        </div>
+        <div class="field">
+          <label>Neighbor Relationships</label>
+          <textarea class="field-textarea" id="neighbors" rows="5" placeholder="A → B, C&#10;B → C, D&#10;C → D&#10;&#10;(one rule per line)"></textarea>
+          <p class="field-hint">Use <code style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:4px;padding:1px 5px;font-family:var(--fm);font-size:10px;color:var(--brand-light)">→</code> or <code style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:4px;padding:1px 5px;font-family:var(--fm);font-size:10px;color:var(--brand-light)">-></code> or <code style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:4px;padding:1px 5px;font-family:var(--fm);font-size:10px;color:var(--brand-light)">:</code></p>
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label>Available Colors</label>
+          <div class="color-pills">
+            <div class="color-pill on" data-n="3">🎨 3 Colors</div>
+            <div class="color-pill" data-n="4">🌈 4 Colors</div>
+          </div>
+          <input type="hidden" id="numColors" value="3"/>
+          <div class="swatch-row">
+            <div class="swatch show" style="background:var(--c-red)"></div>
+            <div class="swatch show" style="background:var(--c-green)"></div>
+            <div class="swatch show" style="background:var(--c-blue)"></div>
+            <div class="swatch" id="swatch4" style="background:var(--c-yellow)"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Solve -->
+      <button class="solve-fab" id="solveBtn">
+        <span id="solveLbl">Solve with AI Backtracking</span>
+        <span class="fab-spinner" id="solveSpinner" hidden>⟳</span>
+      </button>
+
+      <!-- Results (hidden until solve) -->
+      <div id="resultArea"></div>
+
+    </div><!-- /page-solver -->
+
+    <!-- ── PAGE: HOW IT WORKS ── -->
+    <div class="page" id="page-how">
+
+      <div class="how-hero">
+        <span class="how-hero-icon">🧠</span>
+        <h2>How It Works</h2>
+        <p>A real-time walkthrough of the <strong style="color:var(--brand-light)">Constraint Satisfaction Problem</strong> algorithm powering this app.</p>
+      </div>
+
+      <div class="algo-card">
+        <div class="algo-header">
+          <div class="algo-num">01</div>
+          <div class="algo-title">Model as a CSP</div>
+        </div>
+        <div class="algo-body">
+          Each region is a <strong>variable</strong>. The set of available colors is the <strong>domain</strong>. The constraint is simple: no two adjacent regions may share a color.
+        </div>
+      </div>
+
+      <div class="algo-card">
+        <div class="algo-header">
+          <div class="algo-num">02</div>
+          <div class="algo-title">Backtracking Search</div>
+        </div>
+        <div class="algo-body">
+          Assign colors one region at a time. If a conflict is detected, <strong>backtrack</strong> and try the next available color. This recursively prunes invalid branches.
+          <div class="code-block">function BACKTRACK(assignment, csp):
+  if complete → return assignment
+  region ← next unassigned
+  for color in DOMAIN:
+    if valid(region, color):
+      assign(region, color)
+      result ← BACKTRACK(...)
+      if result ≠ fail → return result
+      unassign(region)
+  return FAILURE</div>
+        </div>
+      </div>
+
+      <div class="algo-card">
+        <div class="algo-header">
+          <div class="algo-num">03</div>
+          <div class="algo-title">Constraint Propagation</div>
+        </div>
+        <div class="algo-body">
+          Before committing each assignment, all <strong>neighboring regions</strong> are checked. Invalid colors are skipped early, dramatically cutting the search tree.
+        </div>
+      </div>
+
+      <div class="algo-card">
+        <div class="algo-header">
+          <div class="algo-num">04</div>
+          <div class="algo-title">Four-Color Theorem</div>
+        </div>
+        <div class="algo-body">
+          Any planar map needs at most <strong>4 colors</strong> — proven in 1976 by Appel & Haken. This app demonstrates it interactively on any graph you define.
+        </div>
+      </div>
+
+    </div><!-- /page-how -->
+
+    <!-- ── PAGE: ABOUT ── -->
+    <div class="page" id="page-about">
+
+      <div class="profile-card">
+        <div class="profile-avatar">🎓</div>
+        <div class="profile-name">MapColor AI</div>
+        <div class="profile-sub">AI Assignment · Constraint Satisfaction Problem</div>
+      </div>
+
+      <p class="sec-label">Tech Stack</p>
+      <div class="tech-grid" style="margin-bottom:16px">
+        <div class="tech-item">
+          <span class="tech-emoji">⚙️</span>
+          <div class="tech-name">Algorithm</div>
+          <div class="tech-desc">CSP Backtracking</div>
+        </div>
+        <div class="tech-item">
+          <span class="tech-emoji">🌐</span>
+          <div class="tech-name">Frontend</div>
+          <div class="tech-desc">HTML · CSS · JS</div>
+        </div>
+        <div class="tech-item">
+          <span class="tech-emoji">📊</span>
+          <div class="tech-name">Graph</div>
+          <div class="tech-desc">D3.js v7</div>
+        </div>
+        <div class="tech-item">
+          <span class="tech-emoji">📱</span>
+          <div class="tech-name">Design</div>
+          <div class="tech-desc">App-style UI</div>
+        </div>
+      </div>
+
+      <p class="sec-label">Project Info</p>
+      <div class="card">
+        <div class="info-row">
+          <span class="info-key">Subject</span>
+          <span class="info-val">Artificial Intelligence</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Algorithm</span>
+          <span class="info-val">CSP Backtracking</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Max Colors</span>
+          <span class="info-val">4 (Four-Color Theorem)</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Complexity</span>
+          <span class="info-val">O(d^n)</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Type</span>
+          <span class="info-val">Client-side</span>
+        </div>
+      </div>
+
+      <p class="sec-label">Color Palette</p>
+      <div class="card">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div style="display:flex;align-items:center;gap:10px;background:var(--sys-surface2);border:1px solid var(--sys-border);border-radius:12px;padding:12px">
+            <div style="width:14px;height:14px;border-radius:50%;background:var(--c-red);flex-shrink:0"></div>
+            <span style="font-size:13px;font-weight:600">Red</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:var(--sys-surface2);border:1px solid var(--sys-border);border-radius:12px;padding:12px">
+            <div style="width:14px;height:14px;border-radius:50%;background:var(--c-green);flex-shrink:0"></div>
+            <span style="font-size:13px;font-weight:600">Green</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:var(--sys-surface2);border:1px solid var(--sys-border);border-radius:12px;padding:12px">
+            <div style="width:14px;height:14px;border-radius:50%;background:var(--c-blue);flex-shrink:0"></div>
+            <span style="font-size:13px;font-weight:600">Blue</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:var(--sys-surface2);border:1px solid var(--sys-border);border-radius:12px;padding:12px">
+            <div style="width:14px;height:14px;border-radius:50%;background:var(--c-yellow);flex-shrink:0"></div>
+            <span style="font-size:13px;font-weight:600">Yellow</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /page-about -->
+
+  </div><!-- /pages -->
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <div class="nav-item active" data-page="solver">
+      <div class="nav-icon">🎨</div>
+      <div class="nav-label">Solver</div>
+      <div class="nav-dot"></div>
+    </div>
+    <div class="nav-item" data-page="how">
+      <div class="nav-icon">🧠</div>
+      <div class="nav-label">Algorithm</div>
+      <div class="nav-dot"></div>
+    </div>
+    <div class="nav-item" data-page="about">
+      <div class="nav-icon">ℹ️</div>
+      <div class="nav-label">About</div>
+      <div class="nav-dot"></div>
+    </div>
+  </nav>
+
+</div><!-- /app-shell -->
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ════════════════════════════════════════════
+   NAVIGATION
+   ════════════════════════════════════════════ */
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    const pg = item.dataset.page;
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    item.classList.add('active');
+    document.getElementById('page-' + pg).classList.add('active');
+  });
+});
+
+document.getElementById('infoBtn').onclick = () => {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelector('[data-page="how"]').classList.add('active');
+  document.getElementById('page-how').classList.add('active');
+};
+
+/* ════════════════════════════════════════════
+   TOAST
+   ════════════════════════════════════════════ */
+function showToast(msg, dur=2200) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+
+/* ════════════════════════════════════════════
+   CSP ENGINE
+   ════════════════════════════════════════════ */
+const COLORS = ['Red','Green','Blue','Yellow'];
+const COLOR_HEX = { Red:'#ff4757', Green:'#2ed573', Blue:'#1e90ff', Yellow:'#ffa502' };
+
+function isValid(region, color, assignment, neighbors) {
+  for (const nb of (neighbors[region] || [])) {
+    if (assignment[nb] === color) return false;
+  }
+  return true;
+}
+
+function backtrack(regions, neighbors, nc, assignment, stats) {
+  if (Object.keys(assignment).length === regions.length) return true;
+  const region = regions.find(r => !(r in assignment));
+  for (const color of COLORS.slice(0, nc)) {
+    stats.checks++;
+    if (isValid(region, color, assignment, neighbors)) {
+      assignment[region] = color;
+      stats.steps.push({ region, color, action: 'assign' });
+      if (backtrack(regions, neighbors, nc, assignment, stats)) return true;
+      delete assignment[region];
+      stats.steps.push({ region, color, action: 'backtrack' });
+    }
+  }
+  return false;
+}
+
+function solve(regions, neighbors, nc) {
+  const stats = { checks: 0, steps: [] };
+  const assignment = {};
+  const t0 = performance.now();
+  const ok = backtrack(regions, neighbors, nc, assignment, stats);
+  return { ok, assignment: ok ? assignment : {}, checks: stats.checks, steps: stats.steps, ms: (performance.now()-t0).toFixed(2) };
+}
+
+/* ════════════════════════════════════════════
+   PARSERS
+   ════════════════════════════════════════════ */
+function parseRegions(raw) {
+  return raw.split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
+}
+
+function parseNeighbors(raw, regions) {
+  const nb = {};
+  regions.forEach(r => nb[r] = []);
+  for (const line of raw.split('\n')) {
+    const t = line.trim(); if (!t) continue;
+    let parts;
+    if (t.includes('→')) parts = t.split('→');
+    else if (t.includes('->')) parts = t.split('->');
+    else if (t.includes(':')) parts = t.split(':');
+    else continue;
+    if (parts.length !== 2) continue;
+    const src = parts[0].trim().toUpperCase();
+    const tgts = parts[1].split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
+    if (!nb[src]) nb[src] = [];
+    for (const tgt of tgts) {
+      if (!nb[tgt]) nb[tgt] = [];
+      if (!nb[src].includes(tgt)) nb[src].push(tgt);
+      if (!nb[tgt].includes(src)) nb[tgt].push(src);
+    }
+  }
+  return nb;
+}
+
+/* ════════════════════════════════════════════
+   SAMPLES
+   ════════════════════════════════════════════ */
+const SAMPLES = {
+  simple: {
+    regions: 'A, B, C, D',
+    neighbors: 'A → B, C\nB → A, C, D\nC → A, B, D\nD → B, C',
+    nc: 3
+  },
+  australia: {
+    regions: 'WA, NT, SA, QLD, NSW, VIC, TAS',
+    neighbors: 'WA → NT, SA\nNT → WA, SA, QLD\nSA → WA, NT, QLD, NSW, VIC\nQLD → NT, SA, NSW\nNSW → QLD, SA, VIC\nVIC → SA, NSW\nTAS →',
+    nc: 3
+  },
+  usa: {
+    regions: 'CA, NV, AZ, OR, ID, UT, WA',
+    neighbors: 'CA → NV, AZ, OR\nNV → CA, AZ, OR, ID, UT\nAZ → CA, NV, UT\nOR → CA, NV, ID, WA\nID → NV, OR, WA, UT\nUT → NV, AZ, ID\nWA → OR, ID',
+    nc: 3
+  },
+  europe: {
+    regions: 'FR, BE, LU, DE, CH, IT, ES',
+    neighbors: 'FR → BE, LU, DE, CH, IT, ES\nBE → FR, LU, DE\nLU → BE, FR, DE\nDE → FR, BE, LU, CH\nCH → FR, DE, IT\nIT → FR, CH\nES → FR',
+    nc: 3
+  },
+  custom: { regions: '', neighbors: '', nc: 3 }
+};
+
+document.querySelectorAll('.sample-chip').forEach(c => {
+  c.addEventListener('click', () => {
+    document.querySelectorAll('.sample-chip').forEach(x => x.classList.remove('picked'));
+    c.classList.add('picked');
+    const s = SAMPLES[c.dataset.s];
+    document.getElementById('regions').value = s.regions;
+    document.getElementById('neighbors').value = s.neighbors;
+    document.querySelectorAll('.color-pill').forEach(p => p.classList.toggle('on', +p.dataset.n === s.nc));
+    document.getElementById('numColors').value = s.nc;
+    document.getElementById('swatch4').classList.toggle('show', s.nc === 4);
+    if (c.dataset.s === 'custom') {
+      document.getElementById('regions').focus();
+      showToast('✏️ Enter your own regions & neighbors');
+    }
+  });
+});
+
+/* ════════════════════════════════════════════
+   COLOR PICKER
+   ════════════════════════════════════════════ */
+document.querySelectorAll('.color-pill').forEach(p => {
+  p.addEventListener('click', () => {
+    document.querySelectorAll('.color-pill').forEach(x => x.classList.remove('on'));
+    p.classList.add('on');
+    document.getElementById('numColors').value = p.dataset.n;
+    document.getElementById('swatch4').classList.toggle('show', p.dataset.n === '4');
+  });
+});
+
+/* ════════════════════════════════════════════
+   D3 GRAPH
+   ════════════════════════════════════════════ */
+const svg = d3.select('#gSvg');
+let sim, gNodes = [], gLinks = [], lSel, nSel;
+
+function buildEdges(neighborMap) {
+  const edges = [], seen = new Set();
+  Object.entries(neighborMap).forEach(([src, targets]) => {
+    targets.forEach(tgt => {
+      const key = [src,tgt].sort().join('|');
+      if (!seen.has(key)) { seen.add(key); edges.push([src, tgt]); }
+    });
+  });
+  return edges;
+}
+
+function renderGraph(nodeIds, edges, assignment) {
+  svg.selectAll('*').remove();
+  const box = document.getElementById('graphArea');
+  const W = box.clientWidth, H = box.clientHeight;
+  const r0 = Math.min(W, H) * .34;
+
+  gNodes = nodeIds.map((id, i) => {
+    const a = 2 * Math.PI * i / nodeIds.length - Math.PI / 2;
+    return { id, color: assignment[id] || null, x: W/2 + r0*Math.cos(a), y: H/2 + r0*Math.sin(a) };
+  });
+
+  const seenE = new Set();
+  gLinks = [];
+  edges.forEach(([a,b]) => {
+    const k = [a,b].sort().join('|');
+    if (!seenE.has(k)) { seenE.add(k); gLinks.push({ source: a, target: b }); }
+  });
+
+  lSel = svg.append('g').selectAll('line').data(gLinks).join('line').attr('class','lnk');
+
+  nSel = svg.append('g').selectAll('g').data(gNodes).join('g').attr('class','nd')
+    .call(d3.drag()
+      .filter(ev => !ev.shiftKey)
+      .on('start', (ev,d) => { if(!ev.active) sim.alphaTarget(.3).restart(); d.fx=d.x; d.fy=d.y; })
+      .on('drag',  (ev,d) => { d.fx=ev.x; d.fy=ev.y; })
+      .on('end',   (ev,d) => { if(!ev.active) sim.alphaTarget(0); d.fx=null; d.fy=null; })
+    );
+
+  nSel.append('circle')
+    .attr('r', 22)
+    .attr('fill', d => d.color ? COLOR_HEX[d.color] : 'rgba(255,255,255,.05)')
+    .attr('stroke', d => d.color ? COLOR_HEX[d.color] : 'rgba(255,255,255,.15)')
+    .attr('fill-opacity', d => d.color ? .85 : 1);
+
+  nSel.append('text').text(d => d.id)
+    .attr('fill', d => d.color && ['Yellow'].includes(d.color) ? '#111' : 'white');
+
+  if (sim) sim.stop();
+  sim = d3.forceSimulation(gNodes)
+    .force('link', d3.forceLink(gLinks).id(d=>d.id).distance(100))
+    .force('charge', d3.forceManyBody().strength(-260))
+    .force('center', d3.forceCenter(W/2, H/2))
+    .force('collision', d3.forceCollide(36))
+    .on('tick', () => {
+      lSel.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y)
+          .attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
+      nSel.attr('transform', d=>`translate(${d.x},${d.y})`);
+    });
+
+  document.getElementById('graphEmpty').style.display = 'none';
+}
+
+function animateColors(steps) {
+  const assigns = steps.filter(s => s.action === 'assign');
+  assigns.forEach((s, i) => {
+    setTimeout(() => {
+      nSel.select('circle').filter(d => d.id === s.region)
+        .transition().duration(350)
+        .attr('fill', COLOR_HEX[s.color])
+        .attr('stroke', COLOR_HEX[s.color])
+        .attr('fill-opacity', .85);
+      nSel.select('text').filter(d => d.id === s.region)
+        .attr('fill', s.color === 'Yellow' ? '#111' : 'white');
+      const nd = gNodes.find(n => n.id === s.region);
+      if (nd) nd.color = s.color;
+    }, i * 220);
+  });
+}
+
+/* drag to create */
+let shiftSrc = null;
+svg.on('dblclick', function(ev) {
+  const [mx,my] = d3.pointer(ev, this);
+  const label = prompt('Region name:', '');
+  if (!label) return;
+  const id = label.trim().toUpperCase();
+  if (gNodes.find(n => n.id === id)) { showToast('⚠️ Region already exists'); return; }
+  gNodes.push({ id, x: mx, y: my, color: null });
+  syncForm(); rebuildCanvas();
+  showToast('✅ Node added: ' + id);
+});
+svg.on('mousedown.s', function(ev) {
+  if (!ev.shiftKey) return;
+  const [mx,my] = d3.pointer(ev, this);
+  shiftSrc = gNodes.find(n => Math.hypot(n.x-mx, n.y-my) < 30) || null;
+});
+svg.on('mouseup.s', function(ev) {
+  if (!shiftSrc) return;
+  const [mx,my] = d3.pointer(ev, this);
+  const tgt = gNodes.find(n => n.id !== shiftSrc.id && Math.hypot(n.x-mx, n.y-my) < 30);
+  if (tgt) {
+    const ex = gLinks.some(l => {
+      const s = l.source.id||l.source, t = l.target.id||l.target;
+      return (s===shiftSrc.id&&t===tgt.id)||(s===tgt.id&&t===shiftSrc.id);
+    });
+    if (!ex) {
+      gLinks.push({ source: shiftSrc.id, target: tgt.id });
+      syncForm(); rebuildCanvas();
+      showToast(`🔗 Edge: ${shiftSrc.id} ↔ ${tgt.id}`);
+    }
+  }
+  shiftSrc = null;
+});
+
+function syncForm() {
+  document.getElementById('regions').value = gNodes.map(n=>n.id).join(', ');
+  const seen = new Set(), lines = [];
+  gLinks.forEach(l => {
+    const s=l.source.id||l.source, t=l.target.id||l.target;
+    const k=[s,t].sort().join('|');
+    if (!seen.has(k)) { seen.add(k); lines.push(`${s} → ${t}`); }
+  });
+  document.getElementById('neighbors').value = lines.join('\n');
+}
+
+function rebuildCanvas() {
+  if (!gNodes.length) return;
+  const a = {};
+  gNodes.forEach(n => { if(n.color) a[n.id]=n.color; });
+  renderGraph(gNodes.map(n=>n.id), gLinks.map(l=>[l.source.id||l.source, l.target.id||l.target]), a);
+}
+
+document.getElementById('centerGBtn').onclick = () => { if(sim) sim.alpha(.3).restart(); };
+document.getElementById('resetGBtn').onclick = () => {
+  svg.selectAll('*').remove();
+  gNodes=[]; gLinks=[];
+  document.getElementById('graphEmpty').style.display='flex';
+  document.getElementById('resultArea').innerHTML='';
+  showToast('🗑️ Graph cleared');
+};
+
+/* ════════════════════════════════════════════
+   SOLVE
+   ════════════════════════════════════════════ */
+let lastResult = null;
+
+document.getElementById('solveBtn').onclick = function() {
+  const regRaw = document.getElementById('regions').value.trim();
+  const nbRaw  = document.getElementById('neighbors').value.trim();
+  const nc     = +document.getElementById('numColors').value;
+
+  if (!regRaw) { showToast('⚠️ Enter at least one region'); return; }
+
+  document.getElementById('solveLbl').textContent = 'Solving…';
+  document.getElementById('solveSpinner').hidden = false;
+  this.disabled = true;
+  document.getElementById('resultArea').innerHTML = '';
+
+  setTimeout(() => {
+    const regions   = parseRegions(regRaw);
+    const neighbors = parseNeighbors(nbRaw, regions);
+    const result    = solve(regions, neighbors, nc);
+    lastResult      = { result, regions, neighbors, nc };
+
+    const edges = buildEdges(neighbors);
+    renderGraph(regions, edges, {});
+
+    if (result.ok) {
+      setTimeout(() => animateColors(result.steps), 300);
+      renderResult(result);
+    } else {
+      renderError(nc);
+    }
+
+    document.getElementById('solveLbl').textContent = 'Solve with AI Backtracking';
+    document.getElementById('solveSpinner').hidden = true;
+    this.disabled = false;
+
+    // scroll to result
+    setTimeout(() => {
+      document.getElementById('resultArea').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 400);
+  }, 80);
+};
+
+function renderResult(r) {
+  let chips = '';
+  Object.entries(r.assignment).forEach(([reg, col], i) => {
+    chips += `<div class="assign-row" style="animation-delay:${i*50}ms">
+      <div class="assign-swatch" style="background:${COLOR_HEX[col]}"></div>
+      <div class="assign-reg">${reg}</div>
+      <div class="assign-arrow">→</div>
+      <div class="assign-col">${col}</div>
+    </div>`;
+  });
+
+  let stepItems = '';
+  r.steps.forEach((s, i) => {
+    const dot = `<div class="step-dot" style="background:${COLOR_HEX[s.color]}"></div>`;
+    stepItems += `<div class="step-pill ${s.action}" style="animation-delay:${i*8}ms">
+      <span class="step-tag">${s.action}</span>
+      ${dot}
+      <span>${s.region} → ${s.color}</span>
+    </div>`;
+  });
+
+  document.getElementById('resultArea').innerHTML = `
+    <div class="result-card">
+      <div class="result-status">
+        <div class="status-dot ok"></div>
+        <div class="status-text ok">Solution found — all constraints satisfied!</div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-cell">
+          <span class="stat-num">${r.checks}</span>
+          <span class="stat-lbl">Checks</span>
+        </div>
+        <div class="stat-cell">
+          <span class="stat-num">${r.steps.length}</span>
+          <span class="stat-lbl">Steps</span>
+        </div>
+        <div class="stat-cell">
+          <span class="stat-num">${r.ms}ms</span>
+          <span class="stat-lbl">Time</span>
+        </div>
+      </div>
+      <div class="assign-list">${chips}</div>
+      <div class="steps-section">
+        <button class="steps-toggle-btn" id="stepsToggle">
+          <span>Backtracking Trace (${r.steps.length} steps)</span>
+          <span class="steps-toggle-icon" id="stepsIcon">▾</span>
+        </button>
+        <div class="steps-body" id="stepsBody">
+          <div class="steps-inner">${stepItems}</div>
+        </div>
+      </div>
+    </div>
+    <div class="pdf-row">
+      <button class="outline-btn" id="pdfResultBtn">⬇ Export PDF</button>
+      <button class="outline-btn" id="shareBtn">📋 Copy Result</button>
+    </div>`;
+
+  document.getElementById('stepsToggle').onclick = () => {
+    const body = document.getElementById('stepsBody');
+    const icon = document.getElementById('stepsIcon');
+    const open = body.classList.toggle('open');
+    icon.classList.toggle('open', open);
+    icon.textContent = open ? '▴' : '▾';
+  };
+  document.getElementById('pdfResultBtn').onclick = exportPDF;
+  document.getElementById('shareBtn').onclick = copyResult;
+  showToast('✅ Solution found in ' + r.ms + 'ms');
+}
+
+function renderError(nc) {
+  document.getElementById('resultArea').innerHTML = `
+    <div class="error-card">
+      <div class="error-icon-wrap">✕</div>
+      <div>
+        <div class="error-title">No Solution Found</div>
+        <div class="error-msg">Cannot color this map with ${nc} color${nc>1?'s':''}. ${nc<4?'Try switching to 4 colors.':'Check your neighbor relationships.'}</div>
+      </div>
+    </div>`;
+  showToast('❌ No valid coloring with ' + nc + ' colors');
+}
+
+/* ════════════════════════════════════════════
+   EXPORT PDF
+   ════════════════════════════════════════════ */
+function exportPDF() {
+  if (!lastResult || !lastResult.result.ok) { showToast('⚠️ Solve first!'); return; }
+  const { result } = lastResult;
+  let rows = '';
+  Object.entries(result.assignment).forEach(([reg, col]) => {
+    rows += `<tr><td><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${COLOR_HEX[col]};margin-right:8px"></span>${reg}</td><td style="color:${COLOR_HEX[col]};font-weight:700">${col}</td></tr>`;
+  });
+  const w = window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><title>MapColor AI — Solution</title>
+  <style>
+    body{font-family:monospace;max-width:640px;margin:2rem auto;padding:1rem;color:#111}
+    h1{font-size:1.6rem;border-bottom:3px solid #6c63ff;padding-bottom:.5rem;margin-bottom:.3rem}
+    .meta{color:#666;font-size:.85rem;margin-bottom:1.5rem}
+    h2{font-size:1rem;margin:1.2rem 0 .5rem;color:#333}
+    table{width:100%;border-collapse:collapse}
+    td,th{padding:.5rem .8rem;border:1px solid #ddd;text-align:left}
+    th{background:#6c63ff;color:white}
+    pre{background:#f5f5f5;padding:1rem;border-radius:6px;font-size:.8rem;white-space:pre-wrap;margin-top:.5rem}
+    .badge{display:inline-block;background:#eee;border-radius:4px;padding:2px 8px;font-size:.8rem;margin-right:6px}
+  </style></head><body>
+  <h1>🎨 MapColor AI — CSP Solution</h1>
+  <p class="meta">Generated: ${new Date().toLocaleString()} &nbsp;·&nbsp; Algorithm: Backtracking CSP</p>
+  <h2>Color Assignment</h2>
+  <table><tr><th>Region</th><th>Color</th></tr>${rows}</table>
+  <h2>Statistics</h2>
+  <table><tr><th>Metric</th><th>Value</th></tr>
+    <tr><td>Constraint Checks</td><td><b>${result.checks}</b></td></tr>
+    <tr><td>Steps Taken</td><td><b>${result.steps.length}</b></td></tr>
+    <tr><td>Execution Time</td><td><b>${result.ms} ms</b></td></tr>
+  </table>
+  <h2>Algorithm</h2>
+  <pre>Algorithm  : Backtracking CSP (Constraint Satisfaction Problem)
+Variables  : Map regions (each = one variable)
+Domain     : {Red, Green, Blue, Yellow}
+Constraint : No adjacent regions share the same color
+Theorem    : Four-Color Theorem — any planar map needs ≤ 4 colors
+Complexity : O(d^n)  |  d = colors,  n = regions</pre>
+  </body></html>`);
+  w.document.close();
+  setTimeout(() => w.print(), 500);
+}
+document.getElementById('pdfTopBtn').onclick = exportPDF;
+
+function copyResult() {
+  if (!lastResult || !lastResult.result.ok) { showToast('⚠️ Solve first!'); return; }
+  const lines = Object.entries(lastResult.result.assignment).map(([r,c]) => `${r} → ${c}`).join('\n');
+  navigator.clipboard.writeText(lines).then(() => showToast('📋 Copied to clipboard!'));
+}
+</script>
+</body>
+</html>
